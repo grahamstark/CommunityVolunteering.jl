@@ -1,4 +1,4 @@
-using CSV,DataFrames,GLM,RegressionTables,Weave,CairoMakie
+using CSV,DataFrames,GLM,RegressionTables,Weave,CairoMakie,StatsBase
 
 DPATH="/mnt/data/CommunityLifeSurvey/"
 
@@ -38,5 +38,7 @@ function loadall()
 end
 
 clife = CSV.File("$(DPATH)/clife_combined.tab")|>DataFrame
+
+hist(clife.sex)
 
 # CSV.write( "$(DPATH)/clife_combined.tab", clife )
