@@ -1,8 +1,11 @@
 using CSV,DataFrames,GLM,RegressionTables,Weave,CairoMakie,StatsBase,CategoricalArrays,DDIMeta
 
-DPATH="/mnt/data/CommunityLifeSurvey/"
-
-TARGETS = [
+const DPATH="/mnt/data/CommunityLifeSurvey/"
+const user="postgres"
+const server="localhost"
+const db="vw"
+const constr = "postgresql://$(user)@$(server)/$(db)"
+const TARGETS = [
     ("2012_13/tab/community_life_survey_2012-13_data_set_v2.tab", 2012 ),
     ("2013_14/web_postal/tab/community_life_2013-14_web_postal_data.tab", 2013),
     ("2013_14/tab/community_life_face_to_face_2013_public_dataset.tab", 2013 ),
@@ -27,8 +30,10 @@ function loadone( filename::String, dyear :: Int )::DataFrame
         # rename Occup map using 2010 definitions
         rename!( df, Dict( :rnssec82010=>"rnssec8", :rnssec32010=>"rnssec3", :rnssec52010=>"rnssec5"))
     end
-    df.dyear .= dyear
-    
+    if dyear in [2018,2019,2020]
+        rename!( df, Dict( :sexg=>"sex" ))
+    end
+    df.dyear .= dyear    
     return df
 end
 
@@ -43,9 +48,10 @@ function loadall()
     clife
 end
 
-clife = CSV.File("$(DPATH)/clife_combined.tab")|>DataFrame
+# clife = CSV.File("$(DPATH)/clife_combined.tab")|>DataFrame
 
-# CSV.write( "$(DPATH)/clife_combined.tab", clife )
+loadall()
+
 
 function lrecode( a :: AbstractVector, pairs... )::CategoricalVector
     n = length(a)
@@ -65,11 +71,6 @@ function lrecode( a :: AbstractVector, pairs... )::CategoricalVector
     println( "got v as $v")
     return categorical( v )
 end
-
-user="postgres"
-server="localhost"
-db="vw"
-constr = "postgresql://$(user)@$(server)/$(db)"
 
 vars12 = load_variable_list( str, "comlife", "main", 2012 )
 vars21 = load_variable_list( str, "comlife", "main", 2021 )
@@ -108,6 +109,6 @@ clife.zinffor_c = tocat( clife, :Zinffor )
 clife.zinfform_c = tocat( clife, :Zinfform )
 clife.zengfv1_c = tocat( clife, :ZEngFv1)
 
-
+CSV.write( "$(DPATH)/clife_combined.tab", clife )
 
 # clife.zincomhh = tocat( clife, :ZIncomhh )
