@@ -5,7 +5,7 @@ Sex 12-17, 21  sex 18-20 sexg <- rename! 1 m 2 f
 hten1 - 12-21 7 way tenure
 
 | year  | value |        label  
-|-------|---------------------
+|-------|-------|--------------
 |  2020 | 1     | Own it outright
 |  2020 | 2     | Buying it with the help of a mortgage or loan
 |  2020 | 3     | Pay part rent and part mortgage (shared ownership)
@@ -34,7 +34,7 @@ zincomehh - 12-21 8 levels q
 gor - all years; Govt, Region wales 2015 onward 
  
 | year  | value |        label  
-|-------|---------------------
+|-------|-------|--------------
 | 2015 | 1     | North East
 | 2015 | 2     | North West
 | 2015 | 3     | Yorkshire and Humberside
@@ -55,7 +55,7 @@ gor - all years; Govt, Region wales 2015 onward
 3 cat values:
 
 | value |                             label                              
-|-------+----------------------------------------------------------------
+|-------|----------------------------------------------------------------
 | 1     | Higher managerial, administrative and professional occupations
 | 2     | Intermediate occupations
 | 3     | Routine and manual occupations
@@ -65,7 +65,7 @@ gor - all years; Govt, Region wales 2015 onward
 ocorg type of org worked for 2012-21
  
 | value |                                                        label                                                         
-|-------+----------------------------------------------------------------------------------------------------------------------
+|-------|----------------------------------------------------------------------------------------------------------------------
 | 1     | Private sector firm or company, including for example limited companies and PLCs
 | 2     | Nationalised industry or public corporation, including for example the Post Office and the BBC
 | 3     | Other public sector employer, including for example Central Government/ Civil Service/ Government Agencies/ Local Au
@@ -79,7 +79,7 @@ ocorg type of org worked for 2012-21
 zquals/zquals1 all years
 
  value |                     label                     
--------+-----------------------------------------------
+-------|-----------------------------------------------
 | -9    | Refused
 | -8    | Don't know
 | -3    | Not classified
