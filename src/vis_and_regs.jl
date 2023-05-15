@@ -1,4 +1,4 @@
-using CSV,DataFrames,GLM,RegressionTables,Weave,CairoMakie,StatsBase
+using CSV,DataFrames,GLM,RegressionTables,Weave,CairoMakie,StatsBase,CategoricalArrays,DDIMeta
 
 DPATH="/mnt/data/CommunityLifeSurvey/"
 
@@ -18,20 +18,26 @@ TARGETS = [
     ("2021_22/tab/community_life_survey_2021_22_archive_data_v1.tab", 2021 )
 ]
 
-function loadone( t :: Tuple )::DataFrame
-    df = CSV.File( "$(DPATH)/$(t[1])")|>DataFrame    
+function loadone( filename::String, dyear :: Int )::DataFrame
+    df = CSV.File( "$(DPATH)/$(filename)")|>DataFrame    
     lcn = lowercase.(names(df))
     rename!(df, lcn )
-    df.dyear .= t[2]
+    # adhoc renamings
+    if dyear == 2021
+        # rename Occup map using 2010 definitions
+        rename!( df, Dict( :rnssec82010=>"rnssec8", :rnssec32010=>"rnssec3", :rnssec52010=>"rnssec5"))
+    end
+    df.dyear .= dyear
+    
     return df
 end
 
 function loadall()
-    clife = loadone( TARGETS[1] )
+    clife = loadone( TARGETS[1][1], targets[1][2] )
     n = size(TARGETS)[1]
     for i in 2:n
         global clife
-        c = loadone( targets[i] )
+        c = loadone( targets[i][1], targets[i][2] )
         clife = vcat( clife, c ;cols=:union )    
     end
     clife
@@ -39,6 +45,69 @@ end
 
 clife = CSV.File("$(DPATH)/clife_combined.tab")|>DataFrame
 
-hist(clife.sex)
-
 # CSV.write( "$(DPATH)/clife_combined.tab", clife )
+
+function lrecode( a :: AbstractVector, pairs... )::CategoricalVector
+    n = length(a)
+    v = Vector{Union{String,Missing}}(undef,n)
+    fill!(v,missing)
+    for i in 1:n
+        for p in pairs
+            if ismissing(a[i])            
+                v[i] = missing
+            else
+                if a[i] in p[1]
+                    v[i] = p[2]
+                end
+            end
+        end
+    end
+    println( "got v as $v")
+    return categorical( v )
+end
+
+user="postgres"
+server="localhost"
+db="vw"
+constr = "postgresql://$(user)@$(server)/$(db)"
+
+vars12 = load_variable_list( str, "comlife", "main", 2012 )
+vars21 = load_variable_list( str, "comlife", "main", 2021 )
+
+function tocat( data, varname )
+    v = vars21[varname]
+    println( "v=$v")
+    a = []
+    for (k,e) in v.enums
+        println( "e=$e")
+        if e.value >= 0
+            push!(a, (e.value,e.label))
+        else
+            push!(a, (e.value,missing))
+        end
+    end
+    lv = Symbol(lowercase(String(varname)))
+    lrecode( data[:,lv], a... )
+end
+
+clife.sex_c = tocat(clife,:Sex )
+
+clife.hten1_c = tocat( clife, :HTen1 )
+
+clife.gor_c = tocat( clife, :GOR )
+
+clife.rnssec3_c = tocat( clife, :rnssec3 )
+
+clife.ocorg_c = tocat( clife, :OcOrg )
+
+clife.zquals1_c = tocat( clife, :Zquals)
+
+clife.livharm1_c = tocat( clife, :Livharm1 )
+
+clife.zinffor_c = tocat( clife, :Zinffor )
+clife.zinfform_c = tocat( clife, :Zinfform )
+clife.zengfv1_c = tocat( clife, :ZEngFv1)
+
+
+
+# clife.zincomhh = tocat( clife, :ZIncomhh )

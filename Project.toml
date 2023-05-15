@@ -1,7 +1,13 @@
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
+DDIMeta = "e4f1305c-e1cb-11e8-237b-b194dfe31e34"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
 RegressionTables = "d519eb52-b820-54da-95a6-98e1306fdade"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Weave = "44d3d7a6-8a23-5bf8-98c5-b353f8df5ec9"
+
+[compat]
+CairoMakie="0.10.4, 1"
