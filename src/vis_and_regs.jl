@@ -26,11 +26,13 @@ function loadone( filename::String, dyear :: Int )::DataFrame
     lcn = lowercase.(names(df))
     rename!(df, lcn )
     # adhoc renamings
-    if dyear == 2021
+    if dyear == 2012
+        rename!( df, Dict( :rcaliwt =>"respondentcalibrationweight" ))
+    elseif dyear == 2021
         # rename Occup map using 2010 definitions
         rename!( df, Dict( :rnssec82010=>"rnssec8", :rnssec32010=>"rnssec3", :rnssec52010=>"rnssec5"))
-    end
-    if dyear in [2018,2019,2020]
+        rename!( df, Dict( :rimweightcls=>"respondentcalibrationweight" ))
+    elseif dyear in [2018,2019,2020]
         rename!( df, Dict( :sexg=>"sex" ))
     end
     df.dyear .= dyear    
@@ -110,5 +112,6 @@ clife.zinfform_c = tocat( clife, :Zinfform )
 clife.zengfv1_c = tocat( clife, :ZEngFv1)
 
 CSV.write( "$(DPATH)/clife_combined.tab", clife )
+
 
 # clife.zincomhh = tocat( clife, :ZIncomhh )
