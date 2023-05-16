@@ -1,6 +1,6 @@
 using CSV,DataFrames,GLM,RegressionTables,Weave,StatsBase,CategoricalArrays,DDIMeta
 
-include( "src/constants.jl")
+include( "constants.jl")
 
 function loadone( filename::String, dyear :: Int )::DataFrame
     df = CSV.File( "$(DPATH)/$(filename)")|>DataFrame    
@@ -20,7 +20,10 @@ function loadone( filename::String, dyear :: Int )::DataFrame
     elseif dyear in [2018,2019,2020]
         rename!( df, Dict( :sexg=>"sex" ))
         if dyear == 2019
-            df.sex = tryparse.( Int, df.sex )
+            replace!(df.sex, " "=>rand(["0","1"]))
+            sex = parse.( Int, df.sex )
+            # replace(x -> isnothing(x) ? missing : x, sex)
+            df.sex = sex
         end
     end
     df.dyear .= dyear    
@@ -119,3 +122,50 @@ end
 
 # clife.zincomhh = tocat( clife, :ZIncomhh )
 
+"""
+    -9    | Refusal
+    -8    | Don't know
+    -1    | Item not applicable
+    1     | Under £5,000
+    2     | £5,000-£9,999
+    3     | £10,000-£14,999
+    4     | £15,000-£19,999
+    5     | £20,000-£29,999
+    6     | £30,000-£49,999
+    7     | £50,000-£74,999
+    8     | £75,000 or more
+    9     | No income
+"""
+function toincome( s :: Union{Missing,AbstractString,Int} ) :: Union{Real,Missing}
+    v = -1.0
+    if ismissing(s) || (s in [" ", ""])
+        return missing
+    end
+    if typeof(s) <: Integer
+        i = s
+    else
+        i = tryparse(Int,s)
+    end
+    if i in [9, -9, -8, -1]
+        return missing
+    end
+    if i == 1
+        v = 2_500
+    elseif i == 2
+        v = 7_500
+    elseif i == 3
+        v = 12_500
+    elseif i == 4
+        v = 17_500
+    elseif i == 5
+        v = 25_000
+    elseif i == 6
+        v = 40_000
+    elseif i == 7
+        v = 62_500
+    elseif i == 8
+        v = 80_000
+    end
+    @assert v > 0 "non-mapped |$s|"
+    return v
+end
