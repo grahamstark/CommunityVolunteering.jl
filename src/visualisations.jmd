@@ -1,99 +1,70 @@
-```julia; echo = false
+---
+title : CLS First Look
+author : Graham Stark
+date: 16th May 2023
+---
 
-using Formatting,CSV,DataFrames,GLM,RegressionTables,Weave,CairoMakie,StatsBase,CategoricalArrays,DDIMeta
+# Some Quick(?) Results from a first look at pooled Community Life Survey, 2012-2022
 
-include( "constants.jl")
+A quick look at quick look at a pooled version of 
+the Community Life Survey, 2012-2022, public version from UK Data Service.
 
-cl = CSV.File("$(DPATH)/clife_combined.tab")|>DataFrame
-cl.income = toincome.( clife.zincomhh )
-cl.d2021 = cl.dyear .== 2021
+Note that for years 2012-2014 there's a weird double sample - 1/2from face-to-face and half from postal/web surveys. I haven't got
+these years straight yet (very confusing weights) so that's likely 
+why the graphs jump around at first. After 214 the survey
+is internet-only and sample sizes are stable. There's also a 2020 'covid' sample which
+isn't included here.
 
-function loadone!( outf::DataFrame, inf::AbstractDataFrame, col::Symbol, year::Int  )
-    
-    for(key,cgg) in pairs(groupby(inf, col))
-        println( "key is $key")
-        push!(outf.year, year )
-        label = ismissing( key[1]) ? "NA:$col" : key[1]
-        push!(outf.label, label )
-        yt = sum(cgg.weight)
-        push!(outf.val, 100.0*sum( cgg[cgg.zinfform_c.=="Yes",:weight] )/yt)
-    end
-end
+The dependent variable in the charts & regressions is `zinfform`: Formal or informal volunteering at least once a month. 
+There are lots of others.
 
-p2 = DataFrame( year=fill(0,0), label=fill("",0), val=fill(0.0,0 ))
+There's definitely a drop-off in 2021/2. Other things that jump out:
 
-for (dyear,cg) in pairs(groupby(cl,:dyear))
-    println( "on year $dyear")
-    loadone!( p2, cg, :sex_c, dyear.dyear )
-    loadone!( p2, cg, :gor_c, dyear.dyear )
-    loadone!( p2, cg, :hten1_c, dyear.dyear )
-    loadone!( p2, cg, :ocorg_c, dyear.dyear )
-    loadone!( p2, cg, :zquals1_c, dyear.dyear )
-    loadone!( p2, cg, :livharm1_c, dyear.dyear )
-end
+* Females > Males  
+* North East, London low;
+* Volunteering falls with income but rises with education.
 
-global gdata = unstack( p2, :label, :val )
-rename!( gdata, RENAMES )
-nam = names(gdata)
 
-global m1 = glm( @formula(zinfform ~ sex_c + gor_c + hten1_c + ocorg_c + zquals1_c + livharm1_c ), cl, Binomial())
-global m2 = glm( @formula(zinfform ~ sex_c + gor_c + hten1_c + ocorg_c + zquals1_c + livharm1_c + log(income) + d2021  ), cl, Binomial())
+```julia; echo = false; results="hidden"
+
+using Formatting,DataFrames,RegressionTables,Weave,CairoMakie,StatsBase,CategoricalArrays,DDIMeta
+include( "graphics.jl" )
+" "
 ```
 
 ## Sample Regressions 
 
-Needs lots of work. Similar to [NBER]().
+Probit on whether someone volunteers at least once a month (`zinfform`). 
+Needs lots of work. Similar to [this NBER study](https://www.nber.org/system/files/working_papers/w5435/w5435.pdf).
 
-```julia 
-regtable( m1, m2; renderSettings = latexOutput() )
+Note that:
+
+* age in years deleted from public datatset
+* banded age is missing 2017-2020, hence the 3rd regression sample size;
+* income is midpoint of some bands and is not deflated.
+* `d2021` is a dummy for 2021 study (i.e. collected **CHECK** april 2021/march 2022).
+* dummies are relative to: 
+    - East Midlands, 
+    - Female, 
+    - Mortgaged, 
+    - Charitable Sector, 
+    - A-Level or equiv, 
+    - Cohabiting, 
+    - data year < 2021
+  
+There's a restricted access version of this data at the Archive
+which might fix some of this.
+
+```julia ; echo=false; results="html"
+regtable( WEAVE_ARGS.m1, WEAVE_ARGS.m2, WEAVE_ARGS.m3; renderSettings = htmlOutput() )
 ```
 
-```julia echo = false
-function drawOneGraph!(
-    chart,
-    row :: Int,
-    col :: Int,
-    subtitle :: String,
-    data :: AbstractDataFrame,
-    targets :: Vector{String} )
-    axd = Axis( # = layout[1,1] 
-        chart[row,col], 
-        title="Volunteering in Last Month",
-        subtitle=subtitle,
-        xlabel="Year", 
-        ylabel="%" )
-    ylims!( axd, [0,100.0])
-    plots = []
-    for t in targets
-        l = lines!( 
-            axd,
-            data.year,
-            data[!,Symbol(t)])
-        push!( plots, l )
-    end
-    leg = Legend(
-        chart[row,col+1], 
-        plots,
-        targets );
-end
-
-
-f1 = Figure()
-f2 = Figure()
-f3 = Figure()
-f4 = Figure()
-f5 = Figure()
-f6 = Figure()
+```julia; echo=false
+drawOneGraph!( WEAVE_ARGS.f1, 1, 1, "By Gender", WEAVE_ARGS.gdata, ["Male", "Female"])
 ```
 
-# SOME RESULTS
-
-```julia
-drawOneGraph!( f1, 1, 1, "By Gender", gdata, ["Male", "Female"])
-```
-
-```julia
-drawOneGraph!( f2, 1, 1, "By Region", gdata,  ["North East",
+```julia; echo=false
+drawOneGraph!( WEAVE_ARGS.f2, 1, 1, "By Region", WEAVE_ARGS.gdata,  ["North East",
     "North West",
     "Yorkshire and Humberside",
     "East Midlands",
@@ -104,8 +75,8 @@ drawOneGraph!( f2, 1, 1, "By Region", gdata,  ["North East",
     "South West"])
 ```
 
-```julia
-drawOneGraph!( f3, 1, 1, "By Tenure", gdata, [ 
+```julia; echo=false
+drawOneGraph!( WEAVE_ARGS.f3, 1, 1, "By Tenure", WEAVE_ARGS.gdata, [ 
     "Rents",
     "Owns outright",
     "Mortgaged",
@@ -114,8 +85,8 @@ drawOneGraph!( f3, 1, 1, "By Tenure", gdata, [
     "Squatting" ])
 ```
 
-```julia
-drawOneGraph!( f4, 1, 1, "By Occupation", gdata, 
+```julia; echo=false
+drawOneGraph!( WEAVE_ARGS.f4, 1, 1, "By Occupation", WEAVE_ARGS.gdata, 
     ["Private sector",
     "Other public sector",
     "Nationalised industry",
@@ -124,8 +95,8 @@ drawOneGraph!( f4, 1, 1, "By Occupation", gdata,
     "Self-employed" ] )
 ```
 
-```julia
-drawOneGraph!( f5, 1, 1, "By Marital Status", gdata, 
+```julia; echo=false
+drawOneGraph!( WEAVE_ARGS.f5, 1, 1, "By Marital Status", WEAVE_ARGS.gdata, 
     ["Cohabiting",
     "Married/civil partnered",
     "Divorced",
@@ -133,8 +104,8 @@ drawOneGraph!( f5, 1, 1, "By Marital Status", gdata,
     "Widowed"])
 ```
 
-```julia 
-drawOneGraph!( f6, 1, 1, "By Highest Qualification", gdata, 
+```julia ; echo=false
+drawOneGraph!( WEAVE_ARGS.f6, 1, 1, "By Highest Qualification", WEAVE_ARGS.gdata, 
    ["No qualifications",
     "Degree or equivalent",
     "GCSE D-E equiv",
@@ -143,12 +114,3 @@ drawOneGraph!( f6, 1, 1, "By Highest Qualification", gdata,
     "GCSE A-C",
     "Other Higher Ed"] )
 ```
-
-#=
-save( "report/by_gender.svg", f1 )
-save( "report/by_region.svg", f2)
-save( "report/by_tenure.svg", f3 )
-save( "report/by_occupation.svg", f4 )
-save( "report/by_marital.svg", f5 )
-save( "report/by_qualification.svg", f6 )
-=#
