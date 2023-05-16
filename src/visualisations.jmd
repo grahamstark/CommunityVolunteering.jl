@@ -1,3 +1,5 @@
+```julia
+
 using Formatting,CSV,DataFrames,GLM,RegressionTables,Weave,CairoMakie,StatsBase,CategoricalArrays,DDIMeta
 
 include( "constants.jl")
@@ -25,14 +27,13 @@ for (dyear,cg) in pairs(groupby(cl,:dyear))
     loadone!( p2, cg, :sex_c, dyear.dyear )
     loadone!( p2, cg, :gor_c, dyear.dyear )
     loadone!( p2, cg, :hten1_c, dyear.dyear )
-    loadone!( p2, cg, :rnssec3_c, dyear.dyear )
+    loadone!( p2, cg, :ocorg_c, dyear.dyear )
     loadone!( p2, cg, :zquals1_c, dyear.dyear )
     loadone!( p2, cg, :livharm1_c, dyear.dyear )
 end
 
 gdata = unstack( p2, :label, :val )
 rename!( gdata, RENAMES )
-rename!( gdata, REN2 )
 nam = names(gdata)
 
 m1 = glm( @formula(zinfform ~ sex_c + gor_c + hten1_c + ocorg_c + zquals1_c + livharm1_c ), cl, Binomial())
@@ -73,15 +74,54 @@ f2 = Figure()
 f3 = Figure()
 f4 = Figure()
 f5 = Figure()
+f6 = Figure()
+
 # nam = names(gdata)
 drawOneGraph!( f1, 1, 1, "By Gender", gdata, ["Male", "Female"])
-drawOneGraph!( f2, 1, 1, "By Region", gdata, nam[4:12])
-drawOneGraph!( f3, 1, 1, "By Tenure", gdata, nam[13:18])
-drawOneGraph!( f4, 1, 1, "By Occupation", gdata, nam[36:39])
-drawOneGraph!( f5, 1, 1, "By Marital Status", gdata, ["Single", "Cohabiting", "Married/civil partner", "Divorced", "Separated", "Widowed"])
+drawOneGraph!( f2, 1, 1, "By Region", gdata,  ["North East",
+    "North West",
+    "Yorkshire and Humberside",
+    "East Midlands",
+    "West Midlands",
+    "East of England",
+    "London",
+    "South East",
+    "South West"])
 
-save( "by_gender.svg", f1 )
-save( "by_region.svg", f2)
-save( "by_tenure.svg", f3 )
-save( "by_occupation.svg", f4 )
-save( "by_marital.svg", f5 )
+drawOneGraph!( f3, 1, 1, "By Tenure", gdata, [ 
+    "Rents",
+    "Owns outright",
+    "Mortgaged",
+    "Rent-Free",
+    "Shared ownership",
+    "Squatting" ])
+drawOneGraph!( f4, 1, 1, "By Occupation", gdata, 
+    ["Private sector",
+    "Other public sector",
+    "Nationalised industry",
+    "Charity/ Voluntary",
+    "Other Employment",
+    "Self-employed" ] )
+
+drawOneGraph!( f5, 1, 1, "By Marital Status", gdata, 
+    ["Cohabiting",
+    "Married/civil partnered",
+    "Divorced",
+    "Separated",
+    "Widowed"])
+
+drawOneGraph!( f6, 1, 1, "By Highest Qualification", gdata, 
+   ["No qualifications",
+    "Degree or equivalent",
+    "GCSE D-E equiv",
+    "A level equiv",
+    "Foreign/Other",
+    "GCSE A-C",
+    "Other Higher Ed"] )
+       
+save( "report/by_gender.svg", f1 )
+save( "report/by_region.svg", f2)
+save( "report/by_tenure.svg", f3 )
+save( "report/by_occupation.svg", f4 )
+save( "report/by_marital.svg", f5 )
+save( "report/by_qualification.svg", f6 )
