@@ -1,4 +1,4 @@
-```julia
+```julia; echo = false
 
 using Formatting,CSV,DataFrames,GLM,RegressionTables,Weave,CairoMakie,StatsBase,CategoricalArrays,DDIMeta
 
@@ -32,14 +32,23 @@ for (dyear,cg) in pairs(groupby(cl,:dyear))
     loadone!( p2, cg, :livharm1_c, dyear.dyear )
 end
 
-gdata = unstack( p2, :label, :val )
+global gdata = unstack( p2, :label, :val )
 rename!( gdata, RENAMES )
 nam = names(gdata)
 
-m1 = glm( @formula(zinfform ~ sex_c + gor_c + hten1_c + ocorg_c + zquals1_c + livharm1_c ), cl, Binomial())
-m2 = glm( @formula(zinfform ~ sex_c + gor_c + hten1_c + ocorg_c + zquals1_c + livharm1_c + log(income) + d2021  ), cl, Binomial())
-regtable( m1, m2 )
+global m1 = glm( @formula(zinfform ~ sex_c + gor_c + hten1_c + ocorg_c + zquals1_c + livharm1_c ), cl, Binomial())
+global m2 = glm( @formula(zinfform ~ sex_c + gor_c + hten1_c + ocorg_c + zquals1_c + livharm1_c + log(income) + d2021  ), cl, Binomial())
+```
 
+## Sample Regressions 
+
+Needs lots of work. Similar to [NBER]().
+
+```julia 
+regtable( m1, m2; renderSettings = latexOutput() )
+```
+
+```julia echo = false
 function drawOneGraph!(
     chart,
     row :: Int,
@@ -75,9 +84,15 @@ f3 = Figure()
 f4 = Figure()
 f5 = Figure()
 f6 = Figure()
+```
 
-# nam = names(gdata)
+# SOME RESULTS
+
+```julia
 drawOneGraph!( f1, 1, 1, "By Gender", gdata, ["Male", "Female"])
+```
+
+```julia
 drawOneGraph!( f2, 1, 1, "By Region", gdata,  ["North East",
     "North West",
     "Yorkshire and Humberside",
@@ -87,7 +102,9 @@ drawOneGraph!( f2, 1, 1, "By Region", gdata,  ["North East",
     "London",
     "South East",
     "South West"])
+```
 
+```julia
 drawOneGraph!( f3, 1, 1, "By Tenure", gdata, [ 
     "Rents",
     "Owns outright",
@@ -95,6 +112,9 @@ drawOneGraph!( f3, 1, 1, "By Tenure", gdata, [
     "Rent-Free",
     "Shared ownership",
     "Squatting" ])
+```
+
+```julia
 drawOneGraph!( f4, 1, 1, "By Occupation", gdata, 
     ["Private sector",
     "Other public sector",
@@ -102,14 +122,18 @@ drawOneGraph!( f4, 1, 1, "By Occupation", gdata,
     "Charity/ Voluntary",
     "Other Employment",
     "Self-employed" ] )
+```
 
+```julia
 drawOneGraph!( f5, 1, 1, "By Marital Status", gdata, 
     ["Cohabiting",
     "Married/civil partnered",
     "Divorced",
     "Separated",
     "Widowed"])
+```
 
+```julia 
 drawOneGraph!( f6, 1, 1, "By Highest Qualification", gdata, 
    ["No qualifications",
     "Degree or equivalent",
@@ -118,10 +142,13 @@ drawOneGraph!( f6, 1, 1, "By Highest Qualification", gdata,
     "Foreign/Other",
     "GCSE A-C",
     "Other Higher Ed"] )
-       
+```
+
+#=
 save( "report/by_gender.svg", f1 )
 save( "report/by_region.svg", f2)
 save( "report/by_tenure.svg", f3 )
 save( "report/by_occupation.svg", f4 )
 save( "report/by_marital.svg", f5 )
 save( "report/by_qualification.svg", f6 )
+=#
